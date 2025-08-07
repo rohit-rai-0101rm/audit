@@ -1,74 +1,87 @@
 import React, { useState } from "react";
+import { supabase } from "../supabaseClient";
 
-const TemplateCreationForm = ({ onSubmit }) => {
-  const [template, setTemplate] = useState({
-    name: "",
-    description: "",
-    category: "",
-  });
+const CreateTemplateForm = () => {
+  const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
+  const [auditCategory, setAuditCategory] = useState("");
+  const [message, setMessage] = useState("");
 
-  const categories = ["Merchandising", "Stock", "Quality", "Hygiene"];
+  const auditCategories = [
+    "Merchandising",
+    "Stock",
+    "Quality",
+    "Safety",
+    "Customer Service",
+  ];
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setTemplate((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (template.name.trim() === "") {
-      alert("Template name is required");
-      return;
+
+    const { data, error } = await supabase.from("templates").insert([
+      {
+        name: templateName,
+        description: templateDescription,
+        category: auditCategory,
+      },
+    ]);
+
+    if (error) {
+      console.error("Error inserting template:", error.message);
+      setMessage("Error creating template.");
+    } else {
+      setMessage("Template created successfully!");
+      setTemplateName("");
+      setTemplateDescription("");
+      setAuditCategory("");
     }
-    onSubmit(template);
   };
 
   return (
-    <form className="template-form" onSubmit={handleSubmit}>
+    <div style={{ maxWidth: "500px", margin: "0 auto" }}>
       <h2>Create Audit Template</h2>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Template Name:</label>
+          <input
+            type="text"
+            value={templateName}
+            onChange={(e) => setTemplateName(e.target.value)}
+            required
+          />
+        </div>
 
-      <div className="form-group">
-        <label>Template Name</label>
-        <input
-          type="text"
-          name="name"
-          value={template.name}
-          onChange={handleChange}
-          required
-        />
-      </div>
+        <div>
+          <label>Template Description:</label>
+          <textarea
+            value={templateDescription}
+            onChange={(e) => setTemplateDescription(e.target.value)}
+            required
+          />
+        </div>
 
-      <div className="form-group">
-        <label>Template Description</label>
-        <textarea
-          name="description"
-          value={template.description}
-          onChange={handleChange}
-        />
-      </div>
+        <div>
+          <label>Audit Category:</label>
+          <select
+            value={auditCategory}
+            onChange={(e) => setAuditCategory(e.target.value)}
+            required
+          >
+            <option value="">Select a category</option>
+            {auditCategories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <div className="form-group">
-        <label>Audit Category</label>
-        <select
-          name="category"
-          value={template.category}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select Category</option>
-          {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </select>
-      </div>
+        <button type="submit">Create Template</button>
+      </form>
 
-      <button type="submit" className="submit-button">
-        Create Template
-      </button>
-    </form>
+      {message && <p>{message}</p>}
+    </div>
   );
 };
 
-export default TemplateCreationForm;
+export default CreateTemplateForm;
